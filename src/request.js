@@ -1,12 +1,8 @@
 'use strict';
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+const request = require('request');
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var _request = require('request');
-
-var Request = function () {
+class Request {
   /**
    * Internal representation of HTTP request object.
    *
@@ -19,9 +15,7 @@ var Request = function () {
    * @param {boolean} options.insecureSkipTlsVerify - Skip the validity check
    *   on the server's certificate.
    */
-  function Request(options) {
-    _classCallCheck(this, Request);
-
+  constructor(options) {
     this.requestOptions = options.request || {};
     this.requestOptions.baseUrl = options.url;
     this.requestOptions.ca = options.ca;
@@ -53,31 +47,24 @@ var Request = function () {
    * @param {callback} cb - The callback that handles the response
    * @returns {Stream} If cb is falsy, return a stream
    */
+  request(method, options, cb) {
+    const uri = typeof options.path === 'string' ? options.path : options.path.join('/');
+    const requestOptions = Object.assign({
+      method: method,
+      uri: uri,
+      body: options.body,
+      json: true,
+      qs: options.qs,
+      headers: options.headers
+    }, this.requestOptions);
 
+    if (typeof cb !== 'function') return request(requestOptions);
 
-  _createClass(Request, [{
-    key: 'request',
-    value: function request(method, options, cb) {
-      var uri = typeof options.path === 'string' ? options.path : options.path.join('/');
-      var requestOptions = Object.assign({
-        method: method,
-        uri: uri,
-        body: options.body,
-        json: true,
-        qs: options.qs,
-        headers: options.headers
-      }, this.requestOptions);
-
-      if (typeof cb !== 'function') return _request(requestOptions);
-
-      return _request(requestOptions, function (err, res, body) {
-        if (err) return cb(err);
-        cb(null, { statusCode: res.statusCode, body: body });
-      });
-    }
-  }]);
-
-  return Request;
-}();
+    return request(requestOptions, (err, res, body) => {
+      if (err) return cb(err);
+      cb(null, { statusCode: res.statusCode, body: body });
+    });
+  }
+}
 
 module.exports = Request;

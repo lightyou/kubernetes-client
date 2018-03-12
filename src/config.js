@@ -1,16 +1,16 @@
 'use strict';
 /* eslint no-process-env: 0 no-sync:0 */
 
-var fs = require('fs');
-var path = require('path');
-var yaml = require('js-yaml');
+const fs = require('fs');
+const path = require('path');
+const yaml = require('js-yaml');
 
-var caPath = '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt';
-var tokenPath = '/var/run/secrets/kubernetes.io/serviceaccount/token';
-var namespacePath = '/var/run/secrets/kubernetes.io/serviceaccount/namespace';
+const caPath = '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt';
+const tokenPath = '/var/run/secrets/kubernetes.io/serviceaccount/token';
+const namespacePath = '/var/run/secrets/kubernetes.io/serviceaccount/namespace';
 
 function defaultConfigPath() {
-  var homeDir = process.env[process.platform === 'win32' ? 'USERPROFILE' : 'HOME'];
+  const homeDir = process.env[(process.platform === 'win32') ? 'USERPROFILE' : 'HOME'];
   return path.join(homeDir, '.kube', 'config');
 }
 
@@ -23,22 +23,24 @@ function defaultConfigPath() {
 * @returns {Object} { url, cert, auth, namespace }
 */
 function getInCluster() {
-  var host = process.env.KUBERNETES_SERVICE_HOST;
-  var port = process.env.KUBERNETES_SERVICE_PORT;
+  const host = process.env.KUBERNETES_SERVICE_HOST;
+  const port = process.env.KUBERNETES_SERVICE_PORT;
 
   if (!host || !port) {
-    throw new TypeError('Unable to load in-cluster configuration, KUBERNETES_SERVICE_HOST' + ' and KUBERNETES_SERVICE_PORT must be defined');
+    throw new TypeError(
+      'Unable to load in-cluster configuration, KUBERNETES_SERVICE_HOST' +
+      ' and KUBERNETES_SERVICE_PORT must be defined');
   }
 
-  var ca = fs.readFileSync(caPath, 'utf8');
-  var bearer = fs.readFileSync(tokenPath, 'utf8');
-  var namespace = fs.readFileSync(namespacePath, 'utf8');
+  const ca = fs.readFileSync(caPath, 'utf8');
+  const bearer = fs.readFileSync(tokenPath, 'utf8');
+  const namespace = fs.readFileSync(namespacePath, 'utf8');
 
   return {
-    url: 'https://' + host + ':' + port,
-    ca: ca,
-    auth: { bearer: bearer },
-    namespace: namespace
+    url: `https://${host}:${port}`,
+    ca,
+    auth: { bearer },
+    namespace
   };
 }
 
@@ -53,19 +55,16 @@ function fromKubeconfig(kubeconfig, current) {
   if (!kubeconfig) kubeconfig = loadKubeconfig();
 
   current = current || kubeconfig['current-context'];
-  var context = kubeconfig.contexts.find(function (item) {
-    return item.name === current;
-  }).context;
-  var cluster = kubeconfig.clusters.find(function (item) {
-    return item.name === context.cluster;
-  }).cluster;
-  var userConfig = kubeconfig.users.find(function (user) {
-    return user.name === context.user;
-  });
-  var user = userConfig ? userConfig.user : null;
+  const context = kubeconfig.contexts
+    .find(item => item.name === current).context;
+  const cluster = kubeconfig.clusters
+    .find(item => item.name === context.cluster).cluster;
+  const userConfig = kubeconfig.users
+    .find(user => user.name === context.user);
+  const user = userConfig ? userConfig.user : null;
 
-  var ca = void 0;
-  var insecureSkipTlsVerify = false;
+  let ca;
+  let insecureSkipTlsVerify = false;
   if (cluster) {
     if (cluster['certificate-authority']) {
       ca = fs.readFileSync(path.normalize(cluster['certificate-authority']));
@@ -78,9 +77,9 @@ function fromKubeconfig(kubeconfig, current) {
     }
   }
 
-  var cert = void 0;
-  var key = void 0;
-  var auth = {};
+  let cert;
+  let key;
+  const auth = {};
   if (user) {
     if (user['client-certificate']) {
       cert = fs.readFileSync(path.normalize(user['client-certificate']));
@@ -120,23 +119,17 @@ function fromKubeconfig(kubeconfig, current) {
 module.exports.fromKubeconfig = fromKubeconfig;
 
 function mapCertificates(cfgPath, config) {
-  var configDir = path.dirname(cfgPath);
+  const configDir = path.dirname(cfgPath);
 
-  config.clusters.filter(function (cluster) {
-    return cluster.cluster['certificate-authority'];
-  }).forEach(function (cluster) {
+  config.clusters.filter(cluster => cluster.cluster['certificate-authority']).forEach(cluster => {
     cluster.cluster['certificate-authority'] = path.resolve(configDir, cluster.cluster['certificate-authority']);
   });
 
-  config.users.filter(function (user) {
-    return user.user['client-certificate'];
-  }).forEach(function (user) {
+  config.users.filter(user => user.user['client-certificate']).forEach(user => {
     user.user['client-certificate'] = path.resolve(configDir, user.user['client-certificate']);
   });
 
-  config.users.filter(function (user) {
-    return user.user['client-key'];
-  }).forEach(function (user) {
+  config.users.filter(user => user.user['client-key']).forEach(user => {
     user.user['client-key'] = path.resolve(configDir, user.user['client-key']);
   });
 
@@ -146,7 +139,7 @@ function mapCertificates(cfgPath, config) {
 function loadKubeconfig(cfgPath) {
   cfgPath = cfgPath || defaultConfigPath();
 
-  var config = yaml.safeLoad(fs.readFileSync(cfgPath));
+  const config = yaml.safeLoad(fs.readFileSync(cfgPath));
 
   return mapCertificates(cfgPath, config);
 }

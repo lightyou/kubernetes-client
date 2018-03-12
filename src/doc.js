@@ -17,4 +17,3 @@
  * {@link https://www.npmjs.com/package/request#streaming|A stream from request}
  * @typedef {object} Stream
  */
-"use strict";

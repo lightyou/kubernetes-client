@@ -1,9 +1,7 @@
-'use strict';
-
 //
 // Deprecated interface
 //
-var core = require('./core');
+const core = require('./core');
 module.exports = core;
 module.exports.Api = require('./api');
 module.exports.ApiExtensions = require('./api-extensions');

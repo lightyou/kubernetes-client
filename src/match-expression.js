@@ -15,10 +15,13 @@ function stringify(expressions) {
 
   if (!expressions.operator) return expressions.key;
 
-  var operator = expressions.operator.toLowerCase();
-  if (operator === 'doesnotexist') return '!' + expressions.key;
+  const operator = expressions.operator.toLowerCase();
+  if (operator === 'doesnotexist') return `!${ expressions.key }`;
   if (operator === 'exits') return expressions.key;
-  return [expressions.key, operator, '(' + expressions.values.join(',') + ')'].join(' ');
+  return [
+    expressions.key,
+    operator,
+    `(${ expressions.values.join(',') })`].join(' ');
 }
 
 module.exports.stringify = stringify;
